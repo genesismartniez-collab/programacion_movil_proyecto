@@ -15,6 +15,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _filtroBusqueda = "";
 
+  // Lista actualizada con productos clasificados en tus nuevas categorías
   final List<Producto> listaProductos = [
     Producto(
       id: '1',
@@ -120,11 +121,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
   final Color colorFondo = const Color(0xFFF7F4F0);
   final Color colorRosaSuave = const Color(0xFFFCE4EC);
   final Color colorRosaOscuro = const Color(0xFFD81B60);
-  final Color colorDorado = const Color(0xFFC5A059);
 
   @override
   Widget build(BuildContext context) {
-    // Filtro inteligente por categoría y texto escrito en el buscador
+    // Filtro combinado por categoría y barra de búsqueda
     final productosAMostrar = listaProductos.where((p) {
       final coincideCategoria = widget.categoriaFiltro == null || p.categoria == widget.categoriaFiltro;
       final coincideBusqueda = p.nombre.toLowerCase().contains(_filtroBusqueda.toLowerCase());
@@ -139,81 +139,54 @@ class _CatalogScreenState extends State<CatalogScreen> {
         centerTitle: true,
         iconTheme: IconThemeData(color: colorRosaOscuro),
         title: Text(
-          widget.categoriaFiltro ?? 'Catálogo Exclusivo',
+          widget.categoriaFiltro ?? 'Catálogo General',
           style: TextStyle(
             color: colorRosaOscuro,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
             letterSpacing: 0.5,
           ),
         ),
       ),
       body: Column(
         children: [
-          // BARRA DE BÚSQUEDA MODERNA Y LLAMATIVA
+          // Barra de búsqueda
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: colorDorado.withOpacity(0.4), width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.pink.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (value) => setState(() => _filtroBusqueda = value),
-                decoration: InputDecoration(
-                  hintText: 'Buscar prenda, accesorios, crocs...',
-                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-                  prefixIcon: Icon(Icons.search_rounded, color: colorRosaOscuro),
-                  suffixIcon: _filtroBusqueda.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
-                          onPressed: () {
-                            setState(() {
-                              _searchController.clear();
-                              _filtroBusqueda = "";
-                            });
-                          },
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _filtroBusqueda = value),
+              decoration: InputDecoration(
+                hintText: 'Buscar producto...',
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                prefixIcon: Icon(Icons.search, color: colorRosaOscuro),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
           ),
           
-          // CUADRÍCULA DE PRODUCTOS
+          // Cuadrícula de productos
           Expanded(
             child: productosAMostrar.isEmpty
                 ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.search_off_rounded, size: 48, color: Colors.grey.shade400),
-                        const SizedBox(height: 10),
-                        Text(
-                          'No encontramos productos con ese nombre 🛍️',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 14, fontWeight: FontWeight.w500),
-                        ),
-                      ],
+                    child: Text(
+                      'No hay productos en esta sección todavía 🛍️',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                     ),
                   )
                 : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                     child: GridView.builder(
                       itemCount: productosAMostrar.length,
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 0.82,
+                        childAspectRatio: 0.85,
                         crossAxisSpacing: 14,
                         mainAxisSpacing: 14,
                       ),
@@ -232,12 +205,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(22),
-                              border: Border.all(color: colorDorado.withOpacity(0.2), width: 1),
+                              borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.brown.withOpacity(0.04),
-                                  blurRadius: 12,
+                                  color: Colors.brown.withOpacity(0.05),
+                                  blurRadius: 15,
                                   offset: const Offset(0, 5),
                                 ),
                               ],
@@ -279,13 +251,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 6),
                                 Text(
                                   'L. ${producto.precio.toStringAsFixed(2)}',
                                   style: TextStyle(
                                     color: colorRosaOscuro,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12,
                                   ),
                                 ),
                               ],

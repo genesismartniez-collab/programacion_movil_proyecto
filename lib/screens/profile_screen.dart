@@ -40,7 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 15),
             const Text(
-              'Génesis Martínez',
+              'Usuario1',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const Text(

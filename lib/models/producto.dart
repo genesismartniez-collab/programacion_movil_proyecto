@@ -1,20 +1,19 @@
 class Producto {
-
   final String id;
   final String nombre;
+  final String categoria;
   final double precio;
-  final String imagenUrl;
   final String descripcion;
+  final List<String> tallas;
+  final List<String> colores;
 
-  const Producto({
+  Producto({
     required this.id,
     required this.nombre,
+    required this.categoria,
     required this.precio,
-    required this.imagenUrl,
     required this.descripcion,
+    required this.tallas,
+    required this.colores,
   });
-
-  double calcularPrecioConDescuento(double porcentaje) {
-    return precio - (precio * (porcentaje / 100));
-  }
 }
