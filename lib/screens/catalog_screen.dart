@@ -14,6 +14,13 @@ class CatalogScreen extends StatefulWidget {
 class _CatalogScreenState extends State<CatalogScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _filtroBusqueda = "";
+  String? _categoriaSeleccionada;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoriaSeleccionada = widget.categoriaFiltro;
+  }
 
   // Estado local para los favoritos (ID del producto -> es favorito)
   final Set<String> _favoritosIds = {};
@@ -70,14 +77,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFD81B60)),
                 ),
                 const SizedBox(height: 15),
-                // Campo 1: Nombre
                 TextFormField(
                   controller: nombreController,
                   decoration: const InputDecoration(labelText: 'Nombre del producto', border: OutlineInputBorder()),
                   validator: (value) => value!.isEmpty ? 'Ingrese un nombre' : null,
                 ),
                 const SizedBox(height: 10),
-                // Campo 2: Precio
                 TextFormField(
                   controller: precioController,
                   keyboardType: TextInputType.number,
@@ -85,7 +90,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   validator: (value) => value!.isEmpty ? 'Ingrese un precio' : null,
                 ),
                 const SizedBox(height: 10),
-                // Campo 3: Descripción
                 TextFormField(
                   controller: descController,
                   decoration: const InputDecoration(labelText: 'Descripción', border: OutlineInputBorder()),
@@ -109,7 +113,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                               Producto(
                                 id: DateTime.now().millisecondsSinceEpoch.toString(),
                                 nombre: nombreController.text,
-                                categoria: widget.categoriaFiltro ?? 'Dama',
+                                categoria: _categoriaSeleccionada ?? 'Dama',
                                 precio: double.parse(precioController.text),
                                 descripcion: descController.text,
                                 tallas: ['S', 'M', 'L'],
@@ -137,11 +141,18 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Diseño Responsive basado en el ancho de la pantalla (MediaQuery)
+    final screenWidth = MediaQuery.of(context).size.width;
+    int crossAxisCount = screenWidth > 600 ? 3 : 2; // 3 columnas en tablets, 2 en celulares
+
+    // Filtrado de productos por categoría y barra de búsqueda
     final productosAMostrar = listaProductos.where((p) {
-      final coincideCategoria = widget.categoriaFiltro == null || p.categoria == widget.categoriaFiltro;
+      final coincideCategoria = _categoriaSeleccionada == null || _categoriaSeleccionada == 'Todos' || p.categoria == _categoriaSeleccionada;
       final coincideBusqueda = p.nombre.toLowerCase().contains(_filtroBusqueda.toLowerCase());
       return coincideCategoria && coincideBusqueda;
     }).toList();
+
+    final categoriasDisponibles = ['Todos', 'Dama', 'Ropa Casual', 'Ropa Elegante'];
 
     return Scaffold(
       backgroundColor: colorFondo,
@@ -151,7 +162,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         centerTitle: true,
         iconTheme: IconThemeData(color: colorRosaOscuro),
         title: Text(
-          widget.categoriaFiltro ?? 'Catálogo Genali Shop',
+          _categoriaSeleccionada ?? 'Catálogo Genali Shop',
           style: TextStyle(color: colorRosaOscuro, fontWeight: FontWeight.w900, fontSize: 18),
         ),
       ),
@@ -163,8 +174,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
       ),
       body: Column(
         children: [
+          // Buscador
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: TextField(
               controller: _searchController,
               onChanged: (value) => setState(() => _filtroBusqueda = value),
@@ -172,149 +184,127 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 hintText: 'Buscar productos...',
                 prefixIcon: Icon(Icons.search, color: colorRosaOscuro),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                filled: true,
+                fillColor: Colors.white,
               ),
             ),
           ),
+
+          // Mecanismo de Filtro con ChoiceChip 
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            child: Row(
+              children: categoriasDisponibles.map((cat) {
+                final seleccionado = _categoriaSeleccionada == cat || (cat == 'Todos' && _categoriaSeleccionada == null);
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ChoiceChip(
+                    label: Text(cat),
+                    selected: seleccionado,
+                    selectedColor: colorRosaOscuro.withOpacity(0.2),
+                    labelStyle: TextStyle(
+                      color: seleccionado ? colorRosaOscuro : Colors.black87,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    onSelected: (bool selected) {
+                      setState(() {
+                        _categoriaSeleccionada = cat == 'Todos' ? null : cat;
+                      });
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Listado en GridView.builder con diseño Responsive
           Expanded(
             child: productosAMostrar.isEmpty
                 ? const Center(child: Text('No se encontraron productos'))
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                : GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      childAspectRatio: 0.70, // Proporción de tarjeta (ancho/alto)
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
                     itemCount: productosAMostrar.length,
                     itemBuilder: (context, index) {
                       final producto = productosAMostrar[index];
                       final urlImagen = imagenesProductos[producto.id] ?? 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500';
                       final esFavorito = _favoritosIds.contains(producto.id);
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0),
-                        child: Dismissible(
-                          key: Key(producto.id),
-                          background: Container(
-                            alignment: Alignment.centerLeft,
-                            padding: const EdgeInsets.only(left: 20),
-                            decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(12)),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.edit, color: Colors.white),
-                                SizedBox(width: 8),
-                                Text('Editar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                          ),
-                          secondaryBackground: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20),
-                            decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Text('Eliminar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                SizedBox(width: 8),
-                                Icon(Icons.delete, color: Colors.white),
-                              ],
-                            ),
-                          ),
-                          confirmDismiss: (direction) async {
-                            if (direction == DismissDirection.endToStart) {
-                              return await showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('Confirmar eliminación'),
-                                  content: Text('¿Desea eliminar "${producto.nombre}"?'),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-                                    TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Eliminar', style: TextStyle(color: Colors.red))),
-                                  ],
-                                ),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Acción de Edición activada para: ${producto.nombre}')),
-                              );
-                              return false;
-                            }
-                          },
-                          onDismissed: (direction) {
-                            setState(() {
-                              listaProductos.removeWhere((p) => p.id == producto.id);
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Item eliminado correctamente mediante Dismissible')),
-                            );
-                          },
-                          child: Stack(
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => ProductDetailScreen(producto: producto)),
+                          );
+                        },
+                        child: Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              GestureDetector(
-                                onLongPress: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: const Text('¿Desea eliminar este item?'),
-                                      content: Text('Se eliminará ${producto.nombre} del sistema.'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(ctx),
-                                          child: const Text('Cancelar'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              listaProductos.removeWhere((p) => p.id == producto.id);
-                                            });
-                                            Navigator.pop(ctx);
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(content: Text('Item eliminado por longPress')),
-                                            );
-                                          },
-                                          child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                                child: Card(
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  child: ListTile(
-                                    leading: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        urlImagen,
-                                        width: 50,
-                                        height: 50,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, size: 50),
+                              // Imagen y Botón de Favorito encimado
+                              Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                    child: Image.network(
+                                      urlImagen,
+                                      height: 120,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => const SizedBox(
+                                        height: 120,
+                                        child: Center(child: Icon(Icons.image, size: 50)),
                                       ),
                                     ),
-                                    title: Text(producto.nombre, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    subtitle: Text('L. ${producto.precio.toStringAsFixed(2)}'),
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (_) => ProductDetailScreen(producto: producto)),
-                                      );
-                                    },
                                   ),
-                                ),
+                                  Positioned(
+                                    right: 4,
+                                    top: 4,
+                                    child: IconButton(
+                                      icon: Icon(
+                                        esFavorito ? Icons.favorite : Icons.favorite_border,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          if (esFavorito) {
+                                            _favoritosIds.remove(producto.id);
+                                          } else {
+                                            _favoritosIds.add(producto.id);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Positioned(
-                                right: 8,
-                                top: 8,
-                                child: IconButton(
-                                  icon: Icon(
-                                    esFavorito ? Icons.favorite : Icons.favorite_border,
-                                    color: Colors.red,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      if (esFavorito) {
-                                        _favoritosIds.remove(producto.id);
-                                      } else {
-                                        _favoritosIds.add(producto.id);
-                                      }
-                                    });
-                                  },
+                              // Información del producto dentro de la tarjeta
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      producto.nombre,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'L. ${producto.precio.toStringAsFixed(2)}',
+                                      style: TextStyle(color: colorRosaOscuro, fontWeight: FontWeight.w900, fontSize: 13),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],

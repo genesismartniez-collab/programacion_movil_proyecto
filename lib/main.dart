@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'models/producto.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/catalog_screen.dart';
 import 'screens/cart_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/product_detail_screen.dart';
 
 void main() => runApp(const MyApp());
 
@@ -23,6 +25,13 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const LoginScreen(),
         '/home': (context) => const MainWrapper(),
+        '/catalogo': (context) => const CatalogScreen(),
+        '/carrito': (context) => const CartScreen(),
+        '/perfil': (context) => const ProfileScreen(),
+        '/detalle': (context) {
+          final producto = ModalRoute.of(context)!.settings.arguments as Producto;
+          return ProductDetailScreen(producto: producto);
+        },
       },
     );
   }
