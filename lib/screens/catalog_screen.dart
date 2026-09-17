@@ -12,6 +12,7 @@ class CatalogScreen extends StatefulWidget {
 }
 
 class _CatalogScreenState extends State<CatalogScreen> {
+  // Controladores y variables para el manejo de búsqueda y filtros en pantalla
   final TextEditingController _searchController = TextEditingController();
   String _filtroBusqueda = "";
   String? _categoriaSeleccionada;
@@ -19,12 +20,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
   @override
   void initState() {
     super.initState();
+    // Inicializamos con la categoría que nos hayan pasado por parámetro (si viene alguna)
     _categoriaSeleccionada = widget.categoriaFiltro;
   }
 
-  // Estado local para los favoritos (ID del producto -> es favorito)
+  // Estado local para llevar el control de los IDs de productos marcados como favoritos
   final Set<String> _favoritosIds = {};
 
+  // Lista simulada de productos para mostrar en el catálogo
   final List<Producto> listaProductos = [
     Producto(id: '1', nombre: 'Vestido Corto Casual Rosado', categoria: 'Dama', precio: 450.00, descripcion: 'Vestido tierno y fresco.', tallas: ['XS', 'S', 'M', 'L'], colores: ['Rosa', 'Blanco']),
     Producto(id: '2', nombre: 'Vestido de Noche Elegante', categoria: 'Ropa Elegante', precio: 1250.00, descripcion: 'Vestido largo sofisticado.', tallas: ['S', 'M', 'L'], colores: ['Negro', 'Rojo']),
@@ -33,6 +36,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
     Producto(id: '5', nombre: 'Conjunto Deportivo Chic', categoria: 'Ropa Casual', precio: 550.00, descripcion: 'Cómodo y a la moda para entrenar o salir.', tallas: ['S', 'M', 'L'], colores: ['Gris', 'Rosa']),
   ];
 
+  // Diccionario para asociar cada producto con su respectiva imagen de internet
   final Map<String, String> imagenesProductos = {
     '1': 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500',
     '2': 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=500',
@@ -41,10 +45,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
     '5': 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500',
   };
 
+  // Colores principales de la interfaz
   final Color colorFondo = const Color(0xFFF7F4F0);
   final Color colorRosaOscuro = const Color(0xFFD81B60);
 
-  // Método para mostrar el BottomSheet del FAB
+  // Método para desplegar el formulario inferior (BottomSheet) al presionar el botón flotante
   void _mostrarFormularioNuevo(BuildContext context) {
     final formKey = GlobalKey<FormState>();
     final nombreController = TextEditingController();
@@ -53,13 +58,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
+      isScrollControlled: true, // Permite que el modal se ajuste bien cuando sale el teclado
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         return Padding(
+          // Evitamos que el teclado tape los inputs sumándole el padding inferior del sistema
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
             top: 20,
@@ -107,8 +113,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: colorRosaOscuro),
                       onPressed: () {
+                        // Validamos que los campos obligatorios estén llenos antes de guardar
                         if (formKey.currentState!.validate()) {
                           setState(() {
+                            // Añadimos el nuevo producto a la lista usando el tiempo actual como ID único
                             listaProductos.add(
                               Producto(
                                 id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -122,6 +130,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                             );
                           });
                           Navigator.pop(ctx);
+                          // Mensaje flotante de éxito
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Producto agregado exitosamente')),
                           );
@@ -141,11 +150,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Diseño Responsive basado en el ancho de la pantalla (MediaQuery)
+    // Obtenemos el ancho de la pantalla para ajustar la cantidad de columnas (diseño adaptable)
     final screenWidth = MediaQuery.of(context).size.width;
-    int crossAxisCount = screenWidth > 600 ? 3 : 2; // 3 columnas en tablets, 2 en celulares
+    int crossAxisCount = screenWidth > 600 ? 3 : 2; // 3 columnas si es tablet, 2 si es celular
 
-    // Filtrado de productos por categoría y barra de búsqueda
+    // Filtramos la lista de productos según la categoría elegida y lo que escriba el usuario en el buscador
     final productosAMostrar = listaProductos.where((p) {
       final coincideCategoria = _categoriaSeleccionada == null || _categoriaSeleccionada == 'Todos' || p.categoria == _categoriaSeleccionada;
       final coincideBusqueda = p.nombre.toLowerCase().contains(_filtroBusqueda.toLowerCase());
@@ -166,6 +175,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           style: TextStyle(color: colorRosaOscuro, fontWeight: FontWeight.w900, fontSize: 18),
         ),
       ),
+      // Botón flotante para abrir el modal de agregar producto
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: colorRosaOscuro,
         onPressed: () => _mostrarFormularioNuevo(context),
@@ -174,7 +184,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
       ),
       body: Column(
         children: [
-          // Buscador
+          // Barra de búsqueda superior
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: TextField(
@@ -190,7 +200,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
           ),
 
-          // Mecanismo de Filtro con ChoiceChip 
+          // Chips horizontales para filtrar por categoría de manera interactiva
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
@@ -219,7 +229,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Listado en GridView.builder con diseño Responsive
+          // Cuadrícula (Grid) para mostrar los productos de forma organizada
           Expanded(
             child: productosAMostrar.isEmpty
                 ? const Center(child: Text('No se encontraron productos'))
@@ -227,7 +237,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     padding: const EdgeInsets.all(16),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: crossAxisCount,
-                      childAspectRatio: 0.70, // Proporción de tarjeta (ancho/alto)
+                      childAspectRatio: 0.70, // Relación de aspecto para darle espacio a la tarjeta
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                     ),
@@ -239,6 +249,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
                       return GestureDetector(
                         onTap: () {
+                          // Navegamos hacia la pantalla de detalle enviando el producto seleccionado
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (_) => ProductDetailScreen(producto: producto)),
@@ -250,7 +261,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Imagen y Botón de Favorito encimado
+                              // Stack para colocar la imagen de fondo y el botón de favorito flotando encima
                               Stack(
                                 children: [
                                   ClipRRect(
@@ -276,6 +287,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                       ),
                                       onPressed: () {
                                         setState(() {
+                                          // Agregamos o quitamos de favoritos actualizando el estado
                                           if (esFavorito) {
                                             _favoritosIds.remove(producto.id);
                                           } else {
@@ -287,7 +299,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                   ),
                                 ],
                               ),
-                              // Información del producto dentro de la tarjeta
+                              // Textos descriptivos dentro de la tarjeta del producto
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Column(

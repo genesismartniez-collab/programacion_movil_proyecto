@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 
+// Widget personalizado reutilizable para mostrar un producto o ítem en forma de tarjeta
 class MiItemCard extends StatelessWidget {
+  // Declaración de las variables o propiedades que recibirá el componente
   final String titulo;
   final String subtitulo;
   final double precio;
   final String categoria;
-  final String? imagenUrl;        
+  final String? imagenUrl;         
   final bool mostrarBadge;         
   final VoidCallback onTap;
   final VoidCallback onAccionSecundaria; 
-  final Color colorAccento;         
+  final Color colorAccento;        
 
+  // Constructor con parámetros requeridos y valores por defecto
   const MiItemCard({
     super.key,
     required this.titulo,
@@ -27,11 +30,12 @@ class MiItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
+      elevation: 4, // Sombreado de la tarjeta para darle profundidad
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(20), // Bordes redondeados modernos
       ),
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      // InkWell permite que la tarjeta responda al tacto con una animación bonita
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
@@ -39,6 +43,7 @@ class MiItemCard extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
+              // Contenedor decorativo para el ícono de la izquierda
               Container(
                 width: 60,
                 height: 60,
@@ -53,12 +58,14 @@ class MiItemCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
+              // Columna central que contiene textos (título, subtítulo y precio)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
+                        // Título principal del producto
                         Text(
                           titulo,
                           style: const TextStyle(
@@ -68,6 +75,7 @@ class MiItemCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
+                        // Etiqueta opcional "HOT" si se indica que debe mostrarse
                         if (mostrarBadge)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -87,11 +95,13 @@ class MiItemCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
+                    // Subtítulo o descripción corta
                     Text(
                       subtitulo,
                       style: const TextStyle(fontSize: 13, color: Colors.black54),
                     ),
                     const SizedBox(height: 8),
+                    // Precio formateado con dos decimales y el símbolo de Lempiras (L.)
                     Text(
                       'L. ${precio.toStringAsFixed(2)}',
                       style: TextStyle(
@@ -103,6 +113,7 @@ class MiItemCard extends StatelessWidget {
                   ],
                 ),
               ),
+              // Botón de acción secundaria situado a la derecha (por ejemplo, para eliminar)
               IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                 onPressed: onAccionSecundaria,
