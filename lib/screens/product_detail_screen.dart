@@ -1,201 +1,135 @@
 import 'package:flutter/material.dart';
-import '../models/producto.dart';
-import '../models/cart_model.dart'; // <-- 1. Importamos el modelo global del carrito
 
 class ProductDetailScreen extends StatefulWidget {
-  final Producto producto;
+  final Map<String, dynamic>? producto;
+  final String rol; // 'gerente' o 'empleado'
 
-  const ProductDetailScreen({super.key, required this.producto});
+  const ProductDetailScreen({
+    super.key,
+    this.producto,
+    required this.rol,
+  });
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  // Variables para guardar lo que el usuario va seleccionando
-  String? tallaSeleccionada;
-  String? colorSeleccionado;
+  late int _stockActual;
 
   @override
   void initState() {
     super.initState();
-    // Seleccionamos por defecto la primera opción de cada lista si existen
-    if (widget.producto.tallas.isNotEmpty) {
-      tallaSeleccionada = widget.producto.tallas.first;
-    }
-    if (widget.producto.colores.isNotEmpty) {
-      colorSeleccionado = widget.producto.colores.first;
+    _stockActual = widget.producto?['stock'] ?? 10;
+  }
+
+  void _registrarVenta() {
+    if (_stockActual > 0) {
+      setState(() {
+        _stockActual--;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Venta registrada! Stock actualizado en tiempo real ⚽📉'),
+          backgroundColor: Colors.pinkAccent,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No hay stock disponible de este producto.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final nombre = widget.producto?['nombre'] ?? 'Camiseta / Calzado Deportivo';
+    final categoria = widget.producto?['categoria'] ?? 'Artículos Deportivos';
+    final precio = widget.producto?['precio'] ?? 850.0;
+    bool esGerente = widget.rol == 'gerente';
+
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        title: Text(
-          widget.producto.nombre,
-          style: const TextStyle(color: Colors.black87, fontSize: 16),
-        ),
+        title: const Text('Detalle del Producto'),
+        backgroundColor: Colors.pinkAccent,
+        foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Imagen o contenedor principal del producto estilo estético
-            Container(
-              height: 250,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.pink.shade50.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 90,
+            Center(
+              child: Container(
+                height: 160,
+                width: 160,
+                decoration: BoxDecoration(
+                  color: Colors.pink.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.pinkAccent.shade100, width: 2),
+                ),
+                child: const Icon(
+                  Icons.sports_soccer,
+                  size: 80,
                   color: Colors.pinkAccent,
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Text(
-              widget.producto.categoria.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              widget.producto.nombre,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+              nombre,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text(
-              'L. ${widget.producto.precio.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Colors.pinkAccent,
-              ),
+            Chip(
+              label: Text(categoria, style: const TextStyle(color: Colors.pink)),
+              backgroundColor: Colors.pink.shade50,
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Descripción',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
             Text(
-              widget.producto.descripcion,
-              style: const TextStyle(fontSize: 14, color: Colors.black54, height: 1.4),
+              'Precio: L. ${precio.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.pinkAccent),
             ),
-            const SizedBox(height: 20),
-
-            // SECCIÓN DE TALLAS INTERACTIVAS
-            const Text(
-              'Selecciona la Talla:',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 10,
-              children: widget.producto.tallas.map((talla) {
-                final isSelected = tallaSeleccionada == talla;
-                return ChoiceChip(
-                  label: Text(talla),
-                  selected: isSelected,
-                  selectedColor: Colors.pinkAccent,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.w600,
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Text('Existencias en Inventario (Stock): ', style: TextStyle(fontSize: 16)),
+                Text(
+                  '$_stockActual unidades',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: _stockActual > 0 ? Colors.green.shade700 : Colors.red,
                   ),
-                  backgroundColor: Colors.grey.shade100,
-                  onSelected: (selected) {
-                    setState(() {
-                      tallaSeleccionada = talla;
-                    });
-                  },
-                );
-              }).toList(),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-
-            // SECCIÓN DE COLORES INTERACTIVOS
-            const Text(
-              'Selecciona el Color:',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 10,
-              children: widget.producto.colores.map((color) {
-                final isSelected = colorSeleccionado == color;
-                return ChoiceChip(
-                  label: Text(color),
-                  selected: isSelected,
-                  selectedColor: Colors.pinkAccent,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  backgroundColor: Colors.grey.shade100,
-                  onSelected: (selected) {
-                    setState(() {
-                      colorSeleccionado = color;
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 30),
-
-            // BOTÓN DE COMPRA / AGREGAR AL CARRITO
+            const Spacer(),
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black87,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+                  backgroundColor: esGerente ? Colors.purple : Colors.pinkAccent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                onPressed: () {
-                  // 2. Agregamos el producto de forma real al carrito global
-                  cartModel.addItem({
-                    'nombre': '${widget.producto.nombre} (${tallaSeleccionada ?? 'Única'}, ${colorSeleccionado ?? 'Estándar'})',
-                    'precio': widget.producto.precio,
-                    'cantidad': 1,
-                  });
-
-                  // Mensaje de confirmación visual
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        '¡Agregado al carrito! Talla: $tallaSeleccionada, Color: $colorSeleccionado 🛍️',
-                      ),
-                      backgroundColor: Colors.pinkAccent,
-                    ),
-                  );
-                },
-                child: const Text(
-                  'AGREGAR AL CARRITO',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
+                onPressed: esGerente
+                    ? () {
+                        setState(() {
+                          _stockActual += 5;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Se han sumado 5 unidades al inventario (Gerente).')),
+                        );
+                      }
+                    : _registrarVenta,
+                child: Text(
+                  esGerente ? 'Reabastecer Stock (+5)' : 'Registrar Venta (-1 Stock)',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),

@@ -1,88 +1,117 @@
 import 'package:flutter/material.dart';
-import '../widgets/product_card.dart'; // Importamos tu widget reutilizable
-import 'product_detail_screen.dart';
-import '../models/producto.dart';
 
 class PromosScreen extends StatelessWidget {
   const PromosScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final Color colorFondo = const Color(0xFFF7F4F0);
-    final Color colorRosaOscuro = const Color(0xFFD81B60);
-
-    // Creamos un producto de ejemplo para la sección de promos
-    final productoPromo = Producto(
-      id: 'promo1',
-      nombre: 'Vestido Especial en Oferta',
-      categoria: 'Promociones',
-      precio: 350.00,
-      descripcion: 'Edición limitada con descuento especial de temporada.',
-      tallas: ['S', 'M', 'L'],
-      colores: ['Rosa Pastel'],
-    );
-
     return Scaffold(
-      backgroundColor: colorFondo,
       appBar: AppBar(
-        backgroundColor: colorFondo,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          'Promociones Especiales 🔥',
-          style: TextStyle(
-            color: colorRosaOscuro,
-            fontWeight: FontWeight.w900,
-            fontSize: 18,
-          ),
-        ),
+        title: const Text('Promociones y Ofertas 🌸⚽'),
+        backgroundColor: Colors.pinkAccent,
+        foregroundColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
           children: [
-            const Text(
-              '¡Aprovecha los descuentos del mes!',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+            // Banner principal con la regla de los 3 productos en adelante
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.pink.shade200, Colors.pinkAccent],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.pink.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-            // AQUÍ ESTÁ EL USO DE TU WIDGET REUTILIZABLE EN LA SEGUNDA PANTALLA
-            SizedBox(
-              height: 240,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: 160,
-                    child: ProductCard(
-                      nombre: productoPromo.nombre,
-                      precio: productoPromo.precio,
-                      imagenUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProductDetailScreen(producto: productoPromo),
-                          ),
-                        );
-                      },
-                      onFavorite: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('¡Promoción agregada a favoritos!')),
-                        );
-                      },
+                  Text(
+                    '¡SÚPER PROMOCIÓN EN TIENDA!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    '🔥 ¡Lleva 3 productos en adelante y obtén un descuento especial en tu compra de camisas de fútbol, calzado y accesorios!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      height: 1.4,
                     ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 24),
+            const Text(
+              'Condiciones de la Oferta:',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.pink,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildPromoDetail(Icons.check_circle, 'Aplica al comprar 3 productos o más en cualquier categoría.'),
+            _buildPromoDetail(Icons.check_circle, 'El descuento se calcula automáticamente al acumular los artículos.'),
+            _buildPromoDetail(Icons.check_circle, 'Válido para inventario disponible en Variedades Genali.'),
+            const SizedBox(height: 30),
+            // Botón de acción para ir al catálogo
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pinkAccent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/catalog'); // O la ruta de tu catálogo
+                },
+                child: const Text(
+                  '¡Aprovechar Promoción Ahora!',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPromoDetail(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: Colors.pinkAccent, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 15, color: Colors.black87),
+            ),
+          ),
+        ],
       ),
     );
   }
