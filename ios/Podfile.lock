@@ -1,5 +1,7 @@
 PODS:
   - Flutter (1.0.0)
+  - image_picker_ios (0.0.1):
+    - Flutter
   - onesignal_flutter (5.6.11):
     - Flutter
     - OneSignalXCFramework (= 5.6.2)
@@ -55,6 +57,7 @@ PODS:
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
+  - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - onesignal_flutter (from `.symlinks/plugins/onesignal_flutter/ios`)
 
 SPEC REPOS:
@@ -64,11 +67,14 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
+  image_picker_ios:
+    :path: ".symlinks/plugins/image_picker_ios/ios"
   onesignal_flutter:
     :path: ".symlinks/plugins/onesignal_flutter/ios"
 
 SPEC CHECKSUMS:
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
+  image_picker_ios: e0ece4aa2a75771a7de3fa735d26d90817041326
   onesignal_flutter: ebbc39a155fd33ca843d3f5765aa24a8c318b998
   OneSignalXCFramework: ed7b294af3484c1eef2823773390650ceca6ad30
 

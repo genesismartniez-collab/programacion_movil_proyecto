@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../widgets/drawer_menu.dart';
 
@@ -22,7 +24,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
   bool _ordenarMasVendidos = true;
   int _indiceNav = 0;
 
-  static const Color _rosaFuerte = Color(0xFFF0338D);
+  bool _cargando = true;
+  String? _error;
+  List<Map<String, dynamic>> _productos = [];
+
+  final String baseUrl = 'http://localhost:3000';
+
+  static const Color _rosaFuerte = Color(0xFFFFADCD);
   static const Color _rosaClaro = Color(0xFFFF6FB0);
   static const Color _textoOscuro = Color(0xFF1F2430);
   static const Color _textoGris = Color(0xFF8A909C);
@@ -38,77 +46,98 @@ class _CatalogScreenState extends State<CatalogScreen> {
     {'nombre': 'Perfumería', 'icono': Icons.spa_outlined},
   ];
 
-  final List<Map<String, dynamic>> _productos = [
-    {
-      'nombre': 'Camiseta Oficial Selección',
-      'categoria': 'Fútbol',
-      'icono': Icons.sports_soccer,
-      'tallas': ['S', 'M', 'L', 'XL'],
-      'stock': 120,
-      'esFavorito': true,
-    },
-    {
-      'nombre': 'Tenis Deportivos Urbanos',
-      'categoria': 'Calzado',
-      'icono': Icons.ice_skating_outlined,
-      'tallas': ['38', '39', '40', '41', '42'],
-      'stock': 85,
-      'esFavorito': true,
-    },
-    {
-      'nombre': 'Vestido Casual Rosado',
-      'categoria': 'Vestido Dama',
-      'icono': Icons.checkroom,
-      'tallas': ['XS', 'S', 'M', 'L'],
-      'stock': 60,
-      'esFavorito': false,
-    },
-    {
-      'nombre': 'Gorra New York',
-      'categoria': 'Accesorios',
-      'icono': Icons.shopping_bag_outlined,
-      'tallas': ['Única'],
-      'stock': 45,
-      'esFavorito': false,
-    },
-    {
-      'nombre': 'Perfume Floral Elegante',
-      'categoria': 'Perfumería',
-      'icono': Icons.spa_outlined,
-      'tallas': ['50ml', '100ml'],
-      'stock': 30,
-      'esFavorito': false,
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
     _inicializarOneSignal();
+    _cargarProductos();
   }
 
   void _inicializarOneSignal() {
-    // App ID integrado correctamente de tu cuenta de OneSignal
     OneSignal.initialize("fd143feb-5d7e-4f4e-8494-e7016ca7935b");
-    // Nota: no se pide permiso de notificaciones al abrir el catálogo
-    // para no interrumpir con el popup del sistema.
+    // Nota: no se pide permiso de notificaciones al abrir el catálogo.
   }
 
-  void _venderTalla(int indexProducto, String talla) {
+  Future<void> _cargarProductos() async {
     setState(() {
-      _productos[indexProducto]['tallas'].remove(talla);
-      if (_productos[indexProducto]['stock'] > 0) {
-        _productos[indexProducto]['stock']--;
+      _cargando = true;
+      _error = null;
+    });
+    try {
+      final response = await http
+          .get(Uri.parse('$baseUrl/productos'))
+          .timeout(const Duration(seconds: 15));
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          _productos = data.map<Map<String, dynamic>>((p) {
+            return {
+              'id': p['id'],
+              'nombre': p['nombre'] ?? '',
+              'categoria': p['categoria'] ?? '',
+              'precio': (p['precio'] ?? 0).toDouble(),
+              'stock': p['stock'] ?? 0,
+              'tallas': List<String>.from(p['tallas'] ?? []),
+              'imagen': p['imagen'],
+              'esFavorito': p['esFavorito'] ?? false,
+            };
+          }).toList();
+          _cargando = false;
+        });
+      } else {
+        setState(() {
+          _error = 'El servidor respondió ${response.statusCode}';
+          _cargando = false;
+        });
       }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'No se pudo conectar con el servidor.\n¿Está corriendo el backend?';
+        _cargando = false;
+      });
+    }
+  }
+
+  Future<void> _abrirAgregarProducto() async {
+    final resultado = await Navigator.pushNamed(context, '/agregar_producto');
+    if (resultado != null) _cargarProductos();
+  }
+
+  Future<void> _venderTalla(Map<String, dynamic> producto, String talla) async {
+    // Actualización optimista en pantalla
+    setState(() {
+      (producto['tallas'] as List).remove(talla);
+      if (producto['stock'] > 0) producto['stock']--;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('🔔 ¡Venta registrada! Talla $talla descontada del inventario.'),
         backgroundColor: _rosaFuerte,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 2),
       ),
     );
+
+    // Registrar la venta en el backend (descuenta stock real)
+    try {
+      await http.post(
+        Uri.parse('$baseUrl/ventas'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'productoId': producto['id'],
+          'producto': producto['nombre'],
+          'talla': talla,
+          'cantidad': 1,
+          'empleado': widget.correoUsuario,
+        }),
+      ).timeout(const Duration(seconds: 10));
+    } catch (_) {
+      // Si falla la red, la venta queda reflejada localmente en la vista.
+    }
   }
 
   List<Map<String, dynamic>> get _productosFiltrados {
@@ -126,42 +155,103 @@ class _CatalogScreenState extends State<CatalogScreen> {
     return lista;
   }
 
+  IconData _iconoPorCategoria(String categoria) {
+    switch (categoria.toLowerCase()) {
+      case 'calzado':
+        return Icons.ice_skating_outlined;
+      case 'accesorios':
+        return Icons.shopping_bag_outlined;
+      case 'vestido dama':
+        return Icons.checkroom;
+      case 'fútbol':
+      case 'futbol':
+        return Icons.sports_soccer;
+      case 'perfumería':
+      case 'perfumeria':
+        return Icons.spa_outlined;
+      default:
+        return Icons.inventory_2_outlined;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool esGerente = widget.rolUsuario.toLowerCase() == 'gerente';
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       drawer: DrawerMenu(correoUsuario: widget.correoUsuario, rolUsuario: widget.rolUsuario),
+      floatingActionButton: esGerente
+          ? FloatingActionButton.extended(
+              backgroundColor: _rosaFuerte,
+              foregroundColor: Colors.white,
+              onPressed: _abrirAgregarProducto,
+              icon: const Icon(Icons.add),
+              label: const Text('Producto'),
+            )
+          : null,
       body: SafeArea(
         top: false,
         child: Column(
           children: [
             _buildEncabezado(),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                children: [
-                  _buildBuscador(),
-                  const SizedBox(height: 16),
-                  _buildCategorias(),
-                  const SizedBox(height: 20),
-                  _buildTituloProductos(),
-                  const SizedBox(height: 12),
-                  ..._productosFiltrados.map(_buildTarjetaProducto),
-                  if (_productosFiltrados.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(
-                        child: Text('No hay productos en esta categoría.',
-                            style: TextStyle(color: _textoGris)),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            Expanded(child: _buildCuerpo()),
           ],
         ),
       ),
       bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildCuerpo() {
+    if (_cargando) {
+      return const Center(child: CircularProgressIndicator(color: _rosaFuerte));
+    }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.cloud_off, size: 60, color: _textoGris),
+              const SizedBox(height: 16),
+              Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: _textoGris)),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: _rosaFuerte, foregroundColor: Colors.white),
+                onPressed: _cargarProductos,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      color: _rosaFuerte,
+      onRefresh: _cargarProductos,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        children: [
+          _buildBuscador(),
+          const SizedBox(height: 16),
+          _buildCategorias(),
+          const SizedBox(height: 20),
+          _buildTituloProductos(),
+          const SizedBox(height: 12),
+          ..._productosFiltrados.map(_buildTarjetaProducto),
+          if (_productosFiltrados.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Text('No hay productos todavía.\nAgrega el primero con el botón +',
+                    textAlign: TextAlign.center, style: TextStyle(color: _textoGris)),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -173,7 +263,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_rosaFuerte, _rosaClaro],
+          colors: [Color(0xFFFFADCD), Color(0xFFFFC4DD)],
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24),
@@ -188,34 +278,19 @@ class _CatalogScreenState extends State<CatalogScreen> {
               onPressed: () => Scaffold.of(context).openDrawer(),
             ),
             const SizedBox(width: 4),
-            Expanded(
+            const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text('Catálogo y Stock',
                       style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                  Text('Variedades Genali',
-                      style: TextStyle(color: Colors.white70, fontSize: 15)),
+                  Text('Variedades Genali', style: TextStyle(color: Colors.white70, fontSize: 15)),
                 ],
               ),
             ),
-            Stack(
-              children: [
-                const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 30),
-                Positioned(
-                  right: 2,
-                  top: 2,
-                  child: Container(
-                    width: 9,
-                    height: 9,
-                    decoration: BoxDecoration(
-                      color: Colors.amber,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: _rosaFuerte, width: 1.5),
-                    ),
-                  ),
-                ),
-              ],
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Colors.white, size: 26),
+              onPressed: _cargarProductos,
             ),
           ],
         ),
@@ -294,14 +369,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
+        const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text('Productos', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: _textoOscuro)),
               SizedBox(height: 2),
-              Text('Gestiona tu inventario, tallas y precios.',
-                  style: TextStyle(color: _textoGris, fontSize: 13)),
+              Text('Gestiona tu inventario, tallas y precios.', style: TextStyle(color: _textoGris, fontSize: 13)),
             ],
           ),
         ),
@@ -343,7 +417,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   // ---------- Tarjeta de producto ----------
   Widget _buildTarjetaProducto(Map<String, dynamic> producto) {
-    final realIndex = _productos.indexOf(producto);
     final List<String> tallas = List<String>.from(producto['tallas']);
     final bool esFavorito = producto['esFavorito'];
     final int stock = producto['stock'];
@@ -365,7 +438,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildImagenProducto(producto['icono'], esFavorito),
+              _buildImagenProducto(producto),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -381,30 +454,29 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           ),
                         ),
                         if (esFavorito) _buildBadgeMasVendido(),
-                        const Icon(Icons.chevron_right, color: _textoGris),
                       ],
                     ),
                     const SizedBox(height: 2),
                     Text(producto['categoria'], style: const TextStyle(color: _textoGris, fontSize: 14)),
+                    if ((producto['precio'] ?? 0) > 0) ...[
+                      const SizedBox(height: 4),
+                      Text('L. ${(producto['precio'] as double).toStringAsFixed(2)}',
+                          style: const TextStyle(color: _rosaFuerte, fontSize: 15, fontWeight: FontWeight.bold)),
+                    ],
                     const SizedBox(height: 10),
                     Row(
                       children: [
                         Container(
-                          width: 9,
-                          height: 9,
+                          width: 9, height: 9,
                           decoration: BoxDecoration(
-                            color: hayStock ? _verde : Colors.redAccent,
-                            shape: BoxShape.circle,
-                          ),
+                            color: hayStock ? _verde : Colors.redAccent, shape: BoxShape.circle),
                         ),
                         const SizedBox(width: 6),
                         Text(
                           hayStock ? 'En stock' : 'Agotado',
                           style: TextStyle(
                             color: hayStock ? _verde : Colors.redAccent,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
+                            fontWeight: FontWeight.w600, fontSize: 13),
                         ),
                         const SizedBox(width: 12),
                         Text('$stock unidades',
@@ -424,14 +496,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ? const Text('¡Agotado en todas las tallas!',
                   style: TextStyle(color: Colors.redAccent, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold))
               : Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
+                  spacing: 10, runSpacing: 10,
                   children: tallas.map((talla) {
                     return GestureDetector(
-                      onTap: () => _venderTalla(realIndex, talla),
+                      onTap: () => _venderTalla(producto, talla),
                       child: Container(
-                        width: 54,
-                        height: 44,
+                        width: 54, height: 44,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: const Color(0xFFFDECF4),
@@ -448,22 +518,30 @@ class _CatalogScreenState extends State<CatalogScreen> {
     );
   }
 
-  Widget _buildImagenProducto(IconData icono, bool esFavorito) {
+  Widget _buildImagenProducto(Map<String, dynamic> producto) {
+    final String? imagen = producto['imagen'];
+    final bool esFavorito = producto['esFavorito'];
     return Stack(
       children: [
-        Container(
-          width: 90,
-          height: 110,
-          decoration: BoxDecoration(
-            color: const Color(0xFFFDECF4),
-            borderRadius: BorderRadius.circular(16),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            width: 90,
+            height: 110,
+            child: (imagen != null && imagen.isNotEmpty)
+                ? Image.network(
+                    imagen,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => _placeholderIcono(producto['categoria']),
+                    loadingBuilder: (context, child, progress) =>
+                        progress == null ? child : _placeholderIcono(producto['categoria']),
+                  )
+                : _placeholderIcono(producto['categoria']),
           ),
-          child: Icon(icono, size: 44, color: _rosaClaro),
         ),
         if (esFavorito)
           Positioned(
-            left: 8,
-            top: 8,
+            left: 8, top: 8,
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle),
@@ -474,17 +552,22 @@ class _CatalogScreenState extends State<CatalogScreen> {
     );
   }
 
+  Widget _placeholderIcono(String categoria) {
+    return Container(
+      color: const Color(0xFFFDECF4),
+      alignment: Alignment.center,
+      child: Icon(_iconoPorCategoria(categoria), size: 44, color: _rosaClaro),
+    );
+  }
+
   Widget _buildBadgeMasVendido() {
     return Container(
       margin: const EdgeInsets.only(right: 4),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF3D1),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
+      decoration: BoxDecoration(color: const Color(0xFFFFF3D1), borderRadius: BorderRadius.circular(10)),
+      child: const Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           Icon(Icons.star, size: 13, color: Colors.amber),
           SizedBox(width: 4),
           Text('Lo más vendido', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF8A6D00))),
@@ -529,7 +612,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
     switch (index) {
       case 0:
       case 1:
-        // Inicio / Inventario: ya estamos en el catálogo.
         break;
       case 2:
         Navigator.pushNamed(context, '/ventas_empleados');

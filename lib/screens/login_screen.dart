@@ -18,8 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _recordarme = true;
   bool _cargando = false;
 
-  static const Color _rosaFuerte = Color(0xFFF0338D);
-  static const Color _rosaClaro = Color(0xFFFF6FB0);
+  static const Color _rosaFuerte = Color(0xFFFFADCD);
   static const Color _textoOscuro = Color(0xFF1F2430);
   static const Color _textoGris = Color(0xFF8A909C);
 
@@ -157,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [_rosaFuerte, _rosaClaro],
+            colors: [Color(0xFFFFADCD), Color(0xFFFFC4DD)],
           ),
         ),
         child: Column(

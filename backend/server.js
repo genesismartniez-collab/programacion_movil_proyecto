@@ -57,6 +57,8 @@ const Product = sequelize.define('Product', {
     stock: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     tallas: { type: DataTypes.STRING, allowNull: true },      // "S,M,L"
     imagen: { type: DataTypes.STRING, allowNull: true },      // URL pública de la foto
+    descripcion: { type: DataTypes.TEXT, allowNull: true },
+    activo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
     esFavorito: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }
 });
 
@@ -67,8 +69,9 @@ const Sale = sequelize.define('Sale', {
     empleado: { type: DataTypes.STRING, allowNull: true }
 });
 
-// Sincronizar con la base de datos (crea las tablas que falten)
-sequelize.sync()
+// Sincronizar con la base de datos.
+// { alter: true } agrega columnas nuevas a tablas existentes sin borrar datos.
+sequelize.sync({ alter: true })
     .then(() => console.log('Base de datos sincronizada correctamente'))
     .catch(err => console.error('Error al sincronizar base de datos:', err));
 
@@ -88,6 +91,8 @@ function serializarProducto(req, p) {
         stock: p.stock,
         tallas: p.tallas ? p.tallas.split(',').map(t => t.trim()).filter(t => t) : [],
         imagen: urlImagen(req, p.imagen),
+        descripcion: p.descripcion || '',
+        activo: p.activo,
         esFavorito: p.esFavorito
     };
 }
@@ -159,7 +164,9 @@ app.post('/usuarios/login', async (req, res) => {
             return res.status(400).json({ message: 'Correo o contraseña incorrectos.' });
         }
 
-        const rol = (usuario.correo === 'genesismartniez@gmail.com' || usuario.correo.includes('admin')) ? 'gerente' : 'empleado';
+        // Correos con rol de gerente (acceso total). Agrega aquí más si hace falta.
+        const GERENTES = ['genesismartniez@gmail.com', 'jr4419543@gmail.com'];
+        const rol = (GERENTES.includes(usuario.correo) || usuario.correo.includes('admin')) ? 'gerente' : 'empleado';
 
         res.status(200).json({
             message: '¡Bienvenido!',
@@ -176,10 +183,11 @@ app.post('/usuarios/login', async (req, res) => {
 //  PRODUCTOS
 // ============================================================
 
-// Listar todos los productos
+// Listar productos. Por defecto solo los activos; ?todos=1 devuelve todos.
 app.get('/productos', async (req, res) => {
     try {
-        const productos = await Product.findAll({ order: [['createdAt', 'DESC']] });
+        const where = req.query.todos === '1' ? {} : { activo: true };
+        const productos = await Product.findAll({ where, order: [['createdAt', 'DESC']] });
         res.json(productos.map(p => serializarProducto(req, p)));
     } catch (error) {
         console.error(error);
@@ -190,7 +198,7 @@ app.get('/productos', async (req, res) => {
 // Crear producto (con foto opcional en el campo "imagen" de tipo archivo)
 app.post('/productos', upload.single('imagen'), async (req, res) => {
     try {
-        const { nombre, categoria, precio, stock, tallas, talla, esFavorito } = req.body;
+        const { nombre, categoria, precio, stock, tallas, talla, descripcion, activo, esFavorito } = req.body;
 
         const nuevo = await Product.create({
             nombre,
@@ -198,6 +206,8 @@ app.post('/productos', upload.single('imagen'), async (req, res) => {
             precio: parseFloat(precio) || 0,
             stock: parseInt(stock) || 0,
             tallas: tallas || talla || '',
+            descripcion: descripcion || '',
+            activo: activo === undefined ? true : (activo === 'true' || activo === true),
             imagen: req.file ? req.file.filename : null,
             esFavorito: esFavorito === 'true' || esFavorito === true
         });
@@ -218,12 +228,14 @@ app.put('/productos/:id', upload.single('imagen'), async (req, res) => {
         const producto = await Product.findByPk(req.params.id);
         if (!producto) return res.status(404).json({ message: 'Producto no encontrado.' });
 
-        const { nombre, categoria, precio, stock, tallas, talla, esFavorito } = req.body;
+        const { nombre, categoria, precio, stock, tallas, talla, descripcion, activo, esFavorito } = req.body;
         if (nombre !== undefined) producto.nombre = nombre;
         if (categoria !== undefined) producto.categoria = categoria;
         if (precio !== undefined) producto.precio = parseFloat(precio) || 0;
         if (stock !== undefined) producto.stock = parseInt(stock) || 0;
         if (tallas !== undefined || talla !== undefined) producto.tallas = tallas || talla || '';
+        if (descripcion !== undefined) producto.descripcion = descripcion;
+        if (activo !== undefined) producto.activo = activo === 'true' || activo === true;
         if (esFavorito !== undefined) producto.esFavorito = esFavorito === 'true' || esFavorito === true;
         if (req.file) producto.imagen = req.file.filename;
 

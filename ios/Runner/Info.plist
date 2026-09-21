@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Variedades Genali necesita acceso a tus fotos para agregar imágenes a los productos.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Variedades Genali necesita la cámara para tomar fotos de los productos.</string>
 </dict>
 </plist>
