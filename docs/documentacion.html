@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Documentación · Variedades Genali</title>
+<style>
+  :root{--rosa:#FFADCD;--rosa2:#FFC4DD;--rosaSuave:#FDECF4;--ink:#1F2430;--muted:#8A909C;--line:#ECEFF2;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:#fff;line-height:1.55;font-size:15px}
+  .page{max-width:940px;margin:0 auto;padding:40px 46px}
+  /* Portada */
+  .cover{background:linear-gradient(135deg,var(--rosa),var(--rosa2));color:#fff;border-radius:24px;padding:56px 46px;margin-bottom:40px;position:relative;overflow:hidden}
+  .cover .logo{width:64px;height:64px;border-radius:16px;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;margin-bottom:22px}
+  .cover .logo svg{width:34px;height:34px;stroke:#fff;fill:none;stroke-width:2}
+  .cover h1{font-size:44px;font-weight:800;letter-spacing:.5px}
+  .cover .sub{font-size:20px;font-weight:600;margin-top:6px;opacity:.95}
+  .cover p{margin-top:16px;max-width:560px;opacity:.95}
+  .cover .meta{margin-top:26px;display:flex;gap:26px;flex-wrap:wrap;font-size:14px}
+  .cover .meta div b{display:block;opacity:.8;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  h2{font-size:26px;margin:44px 0 6px;color:var(--ink);display:flex;align-items:center;gap:10px}
+  h2::before{content:"";width:6px;height:26px;border-radius:3px;background:var(--rosa)}
+  h3{font-size:18px;margin:24px 0 8px}
+  p{margin:8px 0}
+  .lead{color:var(--muted)}
+  ul{margin:8px 0 8px 22px}
+  li{margin:5px 0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px}
+  .card{border:1px solid var(--line);border-radius:16px;padding:20px;background:#fff}
+  .card h4{color:var(--rosa);font-size:14px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+  .tag{display:inline-block;background:var(--rosaSuave);color:#D53A86;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;margin:2px 4px 2px 0}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  th{background:var(--rosaSuave);color:var(--ink);text-align:left;padding:10px 12px;font-size:13px}
+  td{padding:9px 12px;border-bottom:1px solid var(--line)}
+  code{background:#F3F4F6;padding:2px 7px;border-radius:6px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+  .cmd{background:#1F2430;color:#F1F1F4;padding:12px 16px;border-radius:10px;font-family:ui-monospace,Menlo,monospace;font-size:13px;margin:8px 0;overflow-x:auto}
+  .shots{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:16px}
+  .shot{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+  .shot img{width:100%;display:block}
+  .shot .cap{padding:10px 12px;font-size:13px;font-weight:600;color:var(--ink);border-top:1px solid var(--line)}
+  .shot .cap span{display:block;color:var(--muted);font-weight:400;font-size:12px}
+  .shots.web{grid-template-columns:1fr}
+  .shots.web .shot .cap{font-size:14px}
+  .note{background:var(--rosaSuave);border-radius:12px;padding:14px 18px;margin:14px 0;font-size:14px}
+  .footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;text-align:center}
+  @media print{.page{max-width:100%;padding:0 10px}h2{page-break-after:avoid}.shot,.card{page-break-inside:avoid}.cover{border-radius:0}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- PORTADA -->
+  <div class="cover">
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+    <h1>Variedades Genali</h1>
+    <div class="sub">Sistema de Gestión de Productos e Inventario</div>
+    <p>Documentación técnica del proyecto: aplicación móvil (Flutter), API backend (Node.js + MySQL) y panel administrativo web. Incluye arquitectura, funcionalidades y capturas de pantalla.</p>
+    <div class="meta">
+      <div><b>Proyecto</b>Variedades Genali</div>
+      <div><b>Plataformas</b>iOS / Android · Web</div>
+      <div><b>Versión</b>1.0.0</div>
+    </div>
+  </div>
+
+  <!-- 1. DESCRIPCIÓN -->
+  <h2>1. Descripción general</h2>
+  <p class="lead">Variedades Genali es un sistema completo para administrar una tienda de ropa, calzado y accesorios. Permite gestionar el catálogo de productos con fotos, registrar ventas que descuentan el inventario en tiempo real, administrar empleados y consultar reportes. El sistema se compone de tres partes que comparten una misma base de datos:</p>
+  <div class="grid2">
+    <div class="card"><h4>Aplicación móvil</h4><p>Hecha en <b>Flutter</b> (Dart). Para uso diario de gerentes y empleados: catálogo, ventas, favoritos, perfil y panel de gerencia.</p></div>
+    <div class="card"><h4>API Backend</h4><p>Servidor en <b>Node.js + Express</b> con <b>Sequelize</b> y base de datos <b>MySQL</b>. Expone los endpoints REST y guarda las fotos de productos.</p></div>
+    <div class="card"><h4>Panel web</h4><p>Panel administrativo en <b>HTML/CSS/JS</b> servido por el propio backend. Dashboard, productos, movimientos, estadísticas y usuarios.</p></div>
+    <div class="card"><h4>Base de datos</h4><p><b>MySQL</b> con las tablas <code>Users</code>, <code>Products</code> y <code>Sales</code>. Las tres partes leen y escriben los mismos datos.</p></div>
+  </div>
+
+  <!-- 2. TECNOLOGÍAS -->
+  <h2>2. Tecnologías utilizadas</h2>
+  <p><b>Móvil:</b> <span class="tag">Flutter</span><span class="tag">Dart</span><span class="tag">http</span><span class="tag">image_picker</span><span class="tag">onesignal_flutter</span></p>
+  <p><b>Backend:</b> <span class="tag">Node.js</span><span class="tag">Express 5</span><span class="tag">Sequelize</span><span class="tag">MySQL 8</span><span class="tag">bcrypt</span><span class="tag">multer</span><span class="tag">cors</span><span class="tag">dotenv</span></p>
+  <p><b>Web:</b> <span class="tag">HTML5</span><span class="tag">CSS3</span><span class="tag">JavaScript</span><span class="tag">SVG icons</span></p>
+
+  <!-- 3. FUNCIONALIDADES -->
+  <h2>3. Funcionalidades implementadas</h2>
+  <div class="grid2">
+    <div class="card"><h4>Autenticación</h4><ul>
+      <li>Login contra la base de datos con contraseñas encriptadas (bcrypt).</li>
+      <li>Sesión de usuario real en toda la app (nombre, correo, rol).</li>
+      <li>Roles: <b>Gerente</b> (acceso total) y <b>Empleado</b>.</li>
+    </ul></div>
+    <div class="card"><h4>Productos</h4><ul>
+      <li>Catálogo cargado desde la base de datos, con fotos.</li>
+      <li>Agregar, editar y eliminar productos (con imagen).</li>
+      <li>Búsqueda, filtro por categoría y orden por más vendidos.</li>
+    </ul></div>
+    <div class="card"><h4>Ventas e inventario</h4><ul>
+      <li>Registro de ventas que <b>descuenta el stock real</b>.</li>
+      <li>Notificación automática cuando el stock queda bajo.</li>
+      <li>Historial de movimientos.</li>
+    </ul></div>
+    <div class="card"><h4>Empleados y reportes</h4><ul>
+      <li>Crear y eliminar empleados (guardados en la base).</li>
+      <li>Favoritos / "Lo más vendido" con datos reales.</li>
+      <li>Reportes: KPIs, más vendidos, ventas por empleado, stock por categoría.</li>
+    </ul></div>
+  </div>
+
+  <!-- 4. BACKEND -->
+  <h2>4. API Backend (endpoints)</h2>
+  <p class="lead">El servidor corre en <code>http://localhost:3000</code> y expone estos endpoints REST:</p>
+  <table>
+    <tr><th>Método</th><th>Ruta</th><th>Descripción</th></tr>
+    <tr><td>POST</td><td><code>/usuarios/login</code></td><td>Inicio de sesión (devuelve rol y datos del usuario)</td></tr>
+    <tr><td>GET</td><td><code>/users</code></td><td>Listar usuarios/empleados</td></tr>
+    <tr><td>POST</td><td><code>/usuarios</code></td><td>Crear usuario/empleado</td></tr>
+    <tr><td>DELETE</td><td><code>/users/:id</code></td><td>Eliminar empleado</td></tr>
+    <tr><td>GET</td><td><code>/productos</code></td><td>Listar productos (solo activos)</td></tr>
+    <tr><td>POST</td><td><code>/productos</code></td><td>Crear producto (con foto, multipart)</td></tr>
+    <tr><td>PUT</td><td><code>/productos/:id</code></td><td>Editar producto</td></tr>
+    <tr><td>DELETE</td><td><code>/productos/:id</code></td><td>Eliminar producto</td></tr>
+    <tr><td>POST</td><td><code>/ventas</code></td><td>Registrar venta (descuenta stock)</td></tr>
+    <tr><td>GET</td><td><code>/ventas</code></td><td>Listar ventas / movimientos</td></tr>
+  </table>
+  <p>Las imágenes de productos se guardan en <code>backend/uploads/</code> y se sirven en <code>/uploads/...</code>. El panel web se sirve en <code>/panel/</code>.</p>
+
+  <!-- 5. APP -->
+  <h2>5. Capturas — Aplicación móvil</h2>
+  <div class="shots">
+    <div class="shot"><img src="capturas/app_login.png"><div class="cap">Login<span>Inicio de sesión con diseño de marca</span></div></div>
+    <div class="shot"><img src="capturas/app_catalogo.png"><div class="cap">Catálogo y Stock<span>Productos reales con foto, precio y tallas</span></div></div>
+    <div class="shot"><img src="capturas/app_menu.png"><div class="cap">Menú lateral<span>Usuario real y Panel de Gerencia</span></div></div>
+    <div class="shot"><img src="capturas/app_agregar.png"><div class="cap">Agregar Producto<span>Formulario con foto y vista previa</span></div></div>
+    <div class="shot"><img src="capturas/app_ventas.png"><div class="cap">Registro de Ventas<span>Empleado, producto y talla desde la base</span></div></div>
+    <div class="shot"><img src="capturas/app_favoritos.png"><div class="cap">Favoritos<span>Lo más vendido con datos reales</span></div></div>
+    <div class="shot"><img src="capturas/app_empleados.png"><div class="cap">Gestión de Empleados<span>Crear y eliminar cuentas de personal</span></div></div>
+    <div class="shot"><img src="capturas/app_reportes.png"><div class="cap">Reportes<span>KPIs y gráficas de ventas e inventario</span></div></div>
+    <div class="shot"><img src="capturas/app_perfil.png"><div class="cap">Perfil de Usuario<span>Datos de sesión y cerrar sesión</span></div></div>
+  </div>
+
+  <!-- 6. WEB -->
+  <h2>6. Capturas — Panel web administrativo</h2>
+  <p class="lead">Panel de escritorio con el mismo diseño y color de la app. Accesible en <code>http://localhost:3000/panel/</code></p>
+  <div class="shots web">
+    <div class="shot"><img src="capturas/web_login.png"><div class="cap">Login del panel<span>Mismo diseño que la app móvil</span></div></div>
+    <div class="shot"><img src="capturas/web_dashboard.png"><div class="cap">Dashboard<span>Resumen: productos, categorías, stock, movimientos recientes</span></div></div>
+    <div class="shot"><img src="capturas/web_productos.png"><div class="cap">Productos<span>Tabla con fotos, crear / editar / eliminar</span></div></div>
+    <div class="shot"><img src="capturas/web_movimientos.png"><div class="cap">Movimientos<span>Historial de ventas y registrar movimiento</span></div></div>
+    <div class="shot"><img src="capturas/web_estadisticas.png"><div class="cap">Estadísticas<span>Más vendidos, ventas por empleado, stock por categoría</span></div></div>
+    <div class="shot"><img src="capturas/web_categorias.png"><div class="cap">Categorías<span>Resumen por categoría: productos, unidades y valor</span></div></div>
+    <div class="shot"><img src="capturas/web_usuarios.png"><div class="cap">Usuarios<span>Administración de cuentas del equipo</span></div></div>
+    <div class="shot"><img src="capturas/web_perfil.png"><div class="cap">Mi perfil<span>Datos de la sesión de administrador</span></div></div>
+  </div>
+
+  <!-- 7. CÓMO EJECUTAR -->
+  <h2>7. Cómo ejecutar el proyecto</h2>
+  <h3>1) Base de datos (MySQL)</h3>
+  <p>Importar el archivo <code>backend/genali_shop.sql</code> en MySQL Workbench (crea la base <code>genali_shop</code> y la tabla de usuarios).</p>
+  <h3>2) Backend</h3>
+  <p>Configurar la contraseña de MySQL en <code>backend/.env</code> y arrancar:</p>
+  <div class="cmd">cd backend<br>node server.js</div>
+  <p>Debe mostrar «Backend corriendo en http://0.0.0.0:3000» y «Base de datos sincronizada correctamente».</p>
+  <h3>3) Aplicación móvil</h3>
+  <div class="cmd">flutter run</div>
+  <h3>4) Panel web</h3>
+  <p>Abrir en el navegador: <code>http://localhost:3000/panel/</code></p>
+
+  <div class="note"><b>Notas técnicas:</b> las contraseñas se almacenan encriptadas con bcrypt. El rol de gerente da acceso al Panel de Gerencia y al panel web. Las categorías del panel se calculan a partir de los productos, y los "movimientos" corresponden a las ventas registradas.</div>
+
+  <div class="footer">
+    Variedades Genali · Sistema de Gestión de Productos · v1.0.0<br>
+    Documentación generada del proyecto (app móvil Flutter + backend Node.js/MySQL + panel web).
+  </div>
+</div>
+</body>
+</html>

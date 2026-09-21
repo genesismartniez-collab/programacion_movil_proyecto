@@ -8,6 +8,8 @@ import 'screens/gestion_usuarios_screen.dart';
 import 'screens/favoritos_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/promos_screen.dart';
+import 'screens/reportes_screen.dart';
+import 'models/sesion.dart';
 
 void main() {
   runApp(const VariedadesGenaliApp());
@@ -33,13 +35,13 @@ class VariedadesGenaliApp extends StatelessWidget {
       home: const LoginScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
-        '/home_gerente': (context) => const CatalogScreen(
-              rolUsuario: 'gerente',
-              correoUsuario: 'genesismartniez@gmail.com',
+        '/home_gerente': (context) => CatalogScreen(
+              rolUsuario: Sesion.rol,
+              correoUsuario: Sesion.correo,
             ),
-        '/catalogo': (context) => const CatalogScreen(
-              rolUsuario: 'empleado',
-              correoUsuario: 'empleado@genali.com',
+        '/catalogo': (context) => CatalogScreen(
+              rolUsuario: Sesion.rol,
+              correoUsuario: Sesion.correo,
             ),
         '/ventas': (context) => const PromosScreen(),
         '/perfil': (context) => const ProfileScreen(),
@@ -47,6 +49,7 @@ class VariedadesGenaliApp extends StatelessWidget {
         '/agregar_producto': (context) => const AgregarProductoScreen(),
         '/ventas_empleados': (context) => const VentasEmpleadosScreen(),
         '/gestion_usuarios': (context) => const GestionUsuariosScreen(),
+        '/reportes': (context) => const ReportesScreen(),
       },
     );
   }

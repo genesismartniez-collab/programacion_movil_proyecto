@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../widgets/notificacion_stock.dart';
 
 class VentasEmpleadosScreen extends StatefulWidget {
   const VentasEmpleadosScreen({super.key});
@@ -103,15 +104,20 @@ class _VentasEmpleadosScreenState extends State<VentasEmpleadosScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         final stock = data['stockRestante'];
+        final prod = _productoSel;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(stock != null
-                ? '🔔 ¡Venta registrada! Stock restante: $stock unidades.'
-                : '🔔 ¡Venta registrada con éxito!'),
+                ? '¡Venta registrada! Stock restante: $stock unidades.'
+                : '¡Venta registrada con éxito!'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 3),
           ),
         );
+        // Notificación de stock bajo (si aplica)
+        if (stock is int && prod != null) {
+          mostrarAlertaStockBajo(context, prod['nombre']?.toString() ?? 'Producto', stock);
+        }
         // Refrescar stock y limpiar selección
         setState(() {
           _tallaSel = null;

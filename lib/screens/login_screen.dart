@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../models/sesion.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -49,9 +50,17 @@ class _LoginScreenState extends State<LoginScreen> {
         // Validamos si es gerente o empleado según el rol que devuelva la BD o el correo
         String rol = (data['rol'] == 'gerente' || _emailController.text.trim().contains('admin')) ? 'gerente' : 'empleado';
 
+        // Guardamos el usuario real en la sesión para toda la app
+        final usuario = data['usuario'] ?? {};
+        Sesion.guardar(
+          nombre: usuario['nombre']?.toString() ?? '',
+          correo: usuario['correo']?.toString() ?? _emailController.text.trim(),
+          rol: rol,
+        );
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('¡Bienvenida a Variedades Genali ($rol)! 🌸'),
+            content: Text('¡Bienvenida a Variedades Genali ($rol)! '),
             backgroundColor: _rosaFuerte,
           ),
         );

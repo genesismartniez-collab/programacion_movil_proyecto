@@ -16,6 +16,9 @@ const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 app.use('/uploads', express.static(uploadsDir));
 
+// Panel administrativo web (HTML): http://localhost:3000/panel
+app.use('/panel', express.static(path.join(__dirname, 'public')));
+
 // Configuración de Multer para guardar las fotos de productos en /uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadsDir),
@@ -112,6 +115,19 @@ app.get('/users', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al obtener los usuarios.' });
+    }
+});
+
+// Eliminar un empleado por id
+app.delete('/users/:id', async (req, res) => {
+    try {
+        const usuario = await User.findByPk(req.params.id);
+        if (!usuario) return res.status(404).json({ message: 'Usuario no encontrado.' });
+        await usuario.destroy();
+        res.json({ message: 'Usuario eliminado.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error al eliminar el usuario.' });
     }
 });
 

@@ -7,7 +7,7 @@ class PromosScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Promociones y Ofertas 🌸⚽'),
+        title: const Text('Promociones y Ofertas '),
         backgroundColor: Colors.pinkAccent,
         foregroundColor: Colors.white,
       ),
@@ -46,7 +46,7 @@ class PromosScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 10),
                   Text(
-                    '🔥 ¡Lleva 3 productos en adelante y obtén un descuento especial en tu compra de camisas de fútbol, calzado y accesorios!',
+                    '¡Lleva 3 productos en adelante y obtén un descuento especial en tu compra de camisas de fútbol, calzado y accesorios!',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 15,

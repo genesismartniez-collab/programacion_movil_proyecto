@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../widgets/drawer_menu.dart';
+import '../widgets/notificacion_stock.dart';
+import 'agregar_producto_screen.dart';
 
 class CatalogScreen extends StatefulWidget {
   final String rolUsuario;
@@ -83,6 +85,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
               'tallas': List<String>.from(p['tallas'] ?? []),
               'imagen': p['imagen'],
               'esFavorito': p['esFavorito'] ?? false,
+              'descripcion': p['descripcion'] ?? '',
+              'activo': p['activo'] ?? true,
             };
           }).toList();
           _cargando = false;
@@ -107,6 +111,54 @@ class _CatalogScreenState extends State<CatalogScreen> {
     if (resultado != null) _cargarProductos();
   }
 
+  Future<void> _editarProducto(Map<String, dynamic> producto) async {
+    final resultado = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => AgregarProductoScreen(producto: producto)),
+    );
+    if (resultado != null) _cargarProductos();
+  }
+
+  Future<void> _eliminarProducto(Map<String, dynamic> producto) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar producto'),
+        content: Text('¿Seguro que quieres eliminar "${producto['nombre']}"? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+
+    try {
+      final response = await http
+          .delete(Uri.parse('$baseUrl/productos/${producto['id']}'))
+          .timeout(const Duration(seconds: 10));
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Producto eliminado'), backgroundColor: _rosaFuerte),
+        );
+        _cargarProductos();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo eliminar (${response.statusCode})'), backgroundColor: Colors.redAccent),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error de conexión: $e'), backgroundColor: Colors.redAccent),
+      );
+    }
+  }
+
   Future<void> _venderTalla(Map<String, dynamic> producto, String talla) async {
     // Actualización optimista en pantalla
     setState(() {
@@ -116,11 +168,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('🔔 ¡Venta registrada! Talla $talla descontada del inventario.'),
+        content: Text('¡Venta registrada! Talla $talla descontada del inventario.'),
         backgroundColor: _rosaFuerte,
         duration: const Duration(seconds: 2),
       ),
     );
+
+    // Notificación de stock bajo (si aplica)
+    mostrarAlertaStockBajo(context, producto['nombre']?.toString() ?? 'Producto', producto['stock'] as int);
 
     // Registrar la venta en el backend (descuenta stock real)
     try {
@@ -454,6 +509,33 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           ),
                         ),
                         if (esFavorito) _buildBadgeMasVendido(),
+                        if (widget.rolUsuario.toLowerCase() == 'gerente')
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert, color: _textoGris, size: 20),
+                            padding: EdgeInsets.zero,
+                            onSelected: (value) {
+                              if (value == 'editar') _editarProducto(producto);
+                              if (value == 'eliminar') _eliminarProducto(producto);
+                            },
+                            itemBuilder: (_) => const [
+                              PopupMenuItem(
+                                value: 'editar',
+                                child: Row(children: [
+                                  Icon(Icons.edit_outlined, color: _rosaFuerte, size: 20),
+                                  SizedBox(width: 10),
+                                  Text('Editar'),
+                                ]),
+                              ),
+                              PopupMenuItem(
+                                value: 'eliminar',
+                                child: Row(children: [
+                                  Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                                  SizedBox(width: 10),
+                                  Text('Eliminar'),
+                                ]),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -617,9 +699,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         Navigator.pushNamed(context, '/ventas_empleados');
         break;
       case 3:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reportes: próximamente 📊')),
-        );
+        Navigator.pushNamed(context, '/reportes');
         break;
       case 4:
         Navigator.pushNamed(context, '/perfil');

@@ -6,7 +6,9 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
 class AgregarProductoScreen extends StatefulWidget {
-  const AgregarProductoScreen({super.key});
+  /// Si viene un producto, la pantalla funciona en modo EDITAR.
+  final Map<String, dynamic>? producto;
+  const AgregarProductoScreen({super.key, this.producto});
 
   @override
   State<AgregarProductoScreen> createState() => _AgregarProductoScreenState();
@@ -25,8 +27,11 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
   bool _esFavorito = false;
   bool _activo = true;
   XFile? _imagen;
+  String? _imagenUrlExistente; // foto ya guardada (modo editar)
   final ImagePicker _picker = ImagePicker();
   final String baseUrl = 'http://localhost:3000';
+
+  bool get _esEdicion => widget.producto != null;
 
   static const Color _rosaFuerte = Color(0xFFFFADCD);
   static const Color _textoOscuro = Color(0xFF1F2430);
@@ -36,6 +41,25 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
     'Calzado', 'Accesorios', 'Vestido Dama', 'Caballero',
     'Niño', 'Niña', 'Fútbol', 'Camiseta Deportiva', 'Perfumería',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.producto;
+    if (p != null) {
+      _nombreController.text = p['nombre']?.toString() ?? '';
+      _precioController.text = (p['precio'] ?? '').toString();
+      _stockController.text = (p['stock'] ?? '').toString();
+      final tallas = p['tallas'];
+      _tallaController.text = tallas is List ? tallas.join(', ') : (tallas?.toString() ?? '');
+      _descripcionController.text = p['descripcion']?.toString() ?? '';
+      final cat = p['categoria']?.toString();
+      if (cat != null && _categorias.contains(cat)) _categoria = cat;
+      _esFavorito = p['esFavorito'] == true;
+      _activo = p['activo'] == null ? true : p['activo'] == true;
+      _imagenUrlExistente = p['imagen']?.toString();
+    }
+  }
 
   @override
   void dispose() {
@@ -112,7 +136,11 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
     setState(() => _cargando = true);
 
     try {
-      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/productos'));
+      // POST para crear, PUT para editar
+      final url = _esEdicion
+          ? Uri.parse('$baseUrl/productos/${widget.producto!['id']}')
+          : Uri.parse('$baseUrl/productos');
+      final request = http.MultipartRequest(_esEdicion ? 'PUT' : 'POST', url);
       request.fields['nombre'] = _nombreController.text.trim();
       request.fields['categoria'] = _categoria!;
       request.fields['precio'] = _precioController.text.trim();
@@ -134,18 +162,21 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ ¡Producto guardado en la base de datos!'), backgroundColor: _rosaFuerte),
+          SnackBar(
+            content: Text(_esEdicion ? '¡Producto actualizado!' : '¡Producto guardado en la base de datos!'),
+            backgroundColor: _rosaFuerte,
+          ),
         );
         Navigator.pop(context, data['producto']);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('⚠️ Error del servidor (Código: ${response.statusCode})'), backgroundColor: Colors.orangeAccent),
+          SnackBar(content: Text('Error del servidor (Código: ${response.statusCode})'), backgroundColor: Colors.orangeAccent),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ Error de conexión con la BD: $e'), backgroundColor: Colors.redAccent),
+        SnackBar(content: Text('Error de conexión con la BD: $e'), backgroundColor: Colors.redAccent),
       );
     } finally {
       if (mounted) setState(() => _cargando = false);
@@ -265,13 +296,13 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
             icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 22),
             onPressed: () => Navigator.pop(context),
           ),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Agregar Producto',
-                    style: TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.bold)),
-                Text('Variedades Genali', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                Text(_esEdicion ? 'Editar Producto' : 'Agregar Producto',
+                    style: const TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.bold)),
+                const Text('Variedades Genali', style: TextStyle(color: Colors.white70, fontSize: 14)),
               ],
             ),
           ),
@@ -373,24 +404,29 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                       color: const Color(0xFFF0F1F4),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: _imagen == null
-                        ? const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.image_outlined, size: 34, color: _textoGris),
-                              SizedBox(height: 6),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 6),
-                                child: Text('La imagen se mostrará aquí',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(color: _textoGris, fontSize: 11)),
-                              ),
-                            ],
-                          )
-                        : ClipRRect(
+                    child: _imagen != null
+                        ? ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: Image.file(File(_imagen!.path), fit: BoxFit.cover, width: double.infinity),
-                          ),
+                          )
+                        : (_imagenUrlExistente != null && _imagenUrlExistente!.isNotEmpty)
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.network(_imagenUrlExistente!, fit: BoxFit.cover, width: double.infinity),
+                              )
+                            : const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.image_outlined, size: 34, color: _textoGris),
+                                  SizedBox(height: 6),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 6),
+                                    child: Text('La imagen se mostrará aquí',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(color: _textoGris, fontSize: 11)),
+                                  ),
+                                ],
+                              ),
                   ),
                 ),
               ],
@@ -556,14 +592,15 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
         onPressed: _cargando ? null : _guardarProducto,
         child: _cargando
             ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-            : const Row(
+            : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.save_outlined, size: 22),
-                  SizedBox(width: 10),
-                  Text('Guardar Producto', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  SizedBox(width: 10),
-                  Icon(Icons.arrow_forward, size: 20),
+                  const Icon(Icons.save_outlined, size: 22),
+                  const SizedBox(width: 10),
+                  Text(_esEdicion ? 'Actualizar Producto' : 'Guardar Producto',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 10),
+                  const Icon(Icons.arrow_forward, size: 20),
                 ],
               ),
       ),
