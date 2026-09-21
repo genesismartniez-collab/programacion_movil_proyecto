@@ -83,7 +83,7 @@ class PromosScreen extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.pushNamed(context, '/catalog'); // O la ruta de tu catálogo
+                  Navigator.pushNamed(context, '/catalogo'); // O la ruta de tu catálogo
                 },
                 child: const Text(
                   '¡Aprovechar Promoción Ahora!',

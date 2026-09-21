@@ -16,7 +16,7 @@ class _VentasEmpleadosScreenState extends State<VentasEmpleadosScreen> {
   final TextEditingController _cantidadController = TextEditingController();
   final TextEditingController _empleadoController = TextEditingController();
 
-  final String baseUrl = 'http://10.0.2.2:3000';
+  final String baseUrl = 'http://localhost:3000';
   bool _isLoading = false;
 
   Future<void> _registrarVenta() async {

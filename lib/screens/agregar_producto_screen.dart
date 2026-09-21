@@ -19,7 +19,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
   
   bool _cargando = false;
   // URL de tu backend conectando al puerto 3000 del emulador Android
-  final String baseUrl = 'http://10.0.2.2:3000';
+  final String baseUrl = 'http://localhost:3000';
 
   Future<void> _guardarEnMySQL() async {
     if (_formKey.currentState!.validate()) {

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { Sequelize, DataTypes } = require('sequelize');
 const bcrypt = require('bcrypt');
@@ -7,13 +8,19 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Conexión a la base de datos MySQL oficial (genali_shop) 
-const sequelize = new Sequelize('genali_shop', 'root', 'BTSlola12', {
-    host: '127.0.0.1',
-    port: 3307,
-    dialect: 'mysql',
-    logging: false
-});
+// Conexión a la base de datos MySQL (genali_shop)
+// Las credenciales se leen del archivo backend/.env
+const sequelize = new Sequelize(
+    process.env.DB_NAME || 'genali_shop',
+    process.env.DB_USER || 'root',
+    process.env.DB_PASSWORD || '',
+    {
+        host: process.env.DB_HOST || '127.0.0.1',
+        port: Number(process.env.DB_PORT) || 3306,
+        dialect: 'mysql',
+        logging: false
+    }
+);
 
 // Definir el Modelo de Usuario
 const User = sequelize.define('User', {

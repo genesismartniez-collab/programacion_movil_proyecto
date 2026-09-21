@@ -12,7 +12,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final String baseUrl = 'http://10.0.2.2:3000'; // Tu API en Node.js
+  final String baseUrl = 'http://localhost:3000'; // Tu API en Node.js
 
   Future<void> _iniciarSesion() async {
     try {
@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Redirige según el rol correspondiente
         Navigator.pushReplacementNamed(
           context,
-          rol == 'gerente' ? '/home_gerente' : '/home_empleado',
+          rol == 'gerente' ? '/home_gerente' : '/catalogo',
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

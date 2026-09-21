@@ -16,7 +16,7 @@ class _GestionUsuariosScreenState extends State<GestionUsuariosScreen> {
   final TextEditingController _passwordController = TextEditingController();
   
   String _rolSeleccionado = 'empleado'; // Por defecto crea empleados
-  final String baseUrl = 'http://10.0.2.2:3000';
+  final String baseUrl = 'http://localhost:3000';
   bool _isLoading = false;
 
   Future<void> _crearUsuario() async {

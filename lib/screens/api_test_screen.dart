@@ -12,7 +12,7 @@ class ApiTestScreen extends StatefulWidget {
 class _ApiTestScreenState extends State<ApiTestScreen> {
   String _estadoConexion = 'Panel de Control y Pruebas - Variedades Genali 🌸';
   bool _cargando = false;
-  final String baseUrl = 'http://10.0.2.2:3000'; 
+  final String baseUrl = 'http://localhost:3000'; 
 
   // 1. Probar conexión con el servidor
   Future<void> _probarConexion() async {
