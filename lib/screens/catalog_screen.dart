@@ -505,10 +505,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
                         Expanded(
                           child: Text(
                             producto['nombre'],
-                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: _textoOscuro),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: _textoOscuro, height: 1.2),
                           ),
                         ),
-                        if (esFavorito) _buildBadgeMasVendido(),
                         if (widget.rolUsuario.toLowerCase() == 'gerente')
                           PopupMenuButton<String>(
                             icon: const Icon(Icons.more_vert, color: _textoGris, size: 20),
@@ -540,6 +541,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(producto['categoria'], style: const TextStyle(color: _textoGris, fontSize: 14)),
+                    if (esFavorito) ...[
+                      const SizedBox(height: 6),
+                      _buildBadgeMasVendido(),
+                    ],
                     if ((producto['precio'] ?? 0) > 0) ...[
                       const SizedBox(height: 4),
                       Text('L. ${(producto['precio'] as double).toStringAsFixed(2)}',
