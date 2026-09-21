@@ -47,3 +47,5 @@ app.*.map.json
 # Variables de entorno del backend
 backend/.env
 .env
+# subidas de imagenes (no versionar)
+backend/uploads/
